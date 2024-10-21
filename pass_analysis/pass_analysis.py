@@ -5,6 +5,9 @@ from mplsoccer import Pitch, Sbopen, VerticalPitch
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MultiLabelBinarizer
 import numpy as np
+import os
+
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 
 path_teams='data/teams.json'
@@ -16,54 +19,44 @@ path_events_name = 'data/eventid2name.csv'
 
 
 
-#For JSON datasets:
-with open(path_teams) as f:
-    data = json.load(f)
+# Data loading optimization
+def load_json(path):
+    with open(path, encoding='utf-8') as f:
+        return pd.DataFrame(json.load(f))
 
-df_teams = pd.DataFrame(data)
+df_teams = load_json(path_teams)
+df_matches = load_json(path_matches)
+world_cup_events = load_json(path_events_world_cup)
+players_world_cup = load_json(path_players)
 
-# Loading the matches data
-with open(path_matches) as f:
-    data = json.load(f)
-
-df_matches = pd.DataFrame(data)
 
 # Selecting the matches of the Polish team. Their team ID is 13869
 polish_matches = df_matches[df_matches['teamsData'].apply(lambda x: '13869' in x.keys())]
 polish_matches_list = list(polish_matches.wyId)
 
-# Loading the events data
-with open(path_events_world_cup) as f:
-    data = json.load(f)
-#save it in a dataframe
-world_cup_events = pd.DataFrame(data)
+
 #structure of data
 polish_matches_events = world_cup_events[world_cup_events.matchId.isin(polish_matches_list)]
-polish_matches_events.head()
+#polish_matches_events.head()
 
-
-# Loading the players data
-
-with open(path_players,encoding='iso8859_2') as f:
-    data = json.load(f)
-
-players_world_cup = pd.DataFrame(data)
 polish_players_wc = players_world_cup[players_world_cup['passportArea'].apply(lambda x: x['name'])=='Poland']
 
 polish_players = polish_players_wc[['shortName','wyId','foot','lastName']].rename(columns={'wyId':'playerId'})
 
 tags = pd.read_csv(path_tags)
 events_name = pd.read_csv(path_events_name)
-tags.head()
+#tags.head()
 
 #Data Cleaning
 
 
 
 #matches_events
-polish_matches_events[['y', 'x', 'end_y', 'end_x']] = polish_matches_events['positions'].apply(lambda x: pd.Series({'y': x[0]['y'], 'x': x[0]['x'], 'end_y': x[1]['y'], 'end_x': x[1]['x']}))
-polish_matches_events = polish_matches_events.drop(columns=['positions'], axis=1)
-polish_matches_events = polish_matches_events.set_index('id')
+# Create a copy of the DataFrame before modifying it
+polish_matches_events = polish_matches_events.copy()
+
+# Use .loc to set values
+polish_matches_events.loc[:, ['y', 'x', 'end_y', 'end_x']] = polish_matches_events['positions'].apply(lambda x: pd.Series({'y': x[0]['y'], 'x': x[0]['x'], 'end_y': x[1]['y'], 'end_x': x[1]['x']}))
 
 #players_info
 
@@ -148,11 +141,11 @@ polish_matches_events = pd.concat([polish_matches_events, tags_dummies], axis=1)
 # Drop the original 'tags' column
 polish_matches_events = polish_matches_events.drop(columns=['tags'])
 
-polish_matches_events.head()
+#polish_matches_events.head()
 
 
 polish_players_names = polish_players.loc[:, ['playerId', 'lastName']].drop_duplicates(subset=['playerId', 'lastName'])
-polish_players_names.head()
+#polish_players_names.head()
 
 df_polish_mathes_events = polish_matches_events[(polish_matches_events.eventName=='Shot') & (polish_matches_events.teamId == 13869)].rename(columns={'label': 'matchName'})
 df_polish_mathes_events = pd.merge(df_polish_mathes_events, polish_players_names, on='playerId')
@@ -170,7 +163,7 @@ def shot_outcome(row):
 # Apply the custom function to create the 'shot_outcome' column
 df_polish_mathes_events['shot_outcome'] = df_polish_mathes_events.apply(shot_outcome, axis=1)
 
-df_polish_mathes_events.head()
+#df_polish_mathes_events.head()
 
 
 
@@ -213,13 +206,14 @@ ax.legend([goal_legend, accurate_legend, missed_legend], ['Goal', 'Accurate', 'M
 match_name = plot_df['matchName'].iloc[0]  # Get the match name from the first row of plot_df
 fig.suptitle(match_name, fontsize=24)
 fig.set_size_inches(12, 8)
-plt.show()
+#plt.show()
 file_name = '{}_plot.jpg'.format(match_name)
 plt.savefig("figures/"+file_name)
+plt.close()
 
 df_polish_mathes_events = polish_matches_events[(polish_matches_events.eventName=='Pass') & (polish_matches_events.teamId == 13869)].rename(columns={'label': 'matchName'})
 df_polish_mathes_events = pd.merge(df_polish_mathes_events, polish_players_names, on='playerId')
-df_polish_mathes_events.head()
+#df_polish_mathes_events.head()
 
 #prepare the dataframe of passes by England that were no-throw ins
 mask_poland = (df_polish_mathes_events.subEventName != "Throw-in") & (df_polish_mathes_events.matchId == 2057996)
@@ -266,9 +260,9 @@ for ax in axs['pitch'][-1, 16 - len(names):]:
 
 #Another way to set title using mplsoccer
 axs['title'].text(0.5, 0.5, 'Polish passes against Senegal', ha='center', va='center', fontsize=30)
-plt.show()
+#plt.show()
 plt.savefig("figures/"+'Polish_passes.jpg')
-
+plt.close()
 
 #prepare the dataframe of passes by England that were no-throw ins
 mask_poland = (df_polish_mathes_events.subEventName != "Throw-in") & (df_polish_mathes_events.matchId == 2057996)
@@ -317,9 +311,9 @@ for ax in axs['pitch'][-1, 16 - len(names):]:
 
 #Another way to set title using mplsoccer
 axs['title'].text(0.5, 0.5, 'Polish offensive passes against Senegal', ha='center', va='center', fontsize=30)
-plt.show()
+#plt.show()
 plt.savefig("figures/"+'Polish_offensive_passes.jpg')
-
+plt.close()
 
 df = polish_matches_events[(polish_matches_events.matchId == 2057996) & (polish_matches_events.teamId == 13869) & (polish_matches_events.eventName == 'Pass') & (polish_matches_events.matchPeriod == '1H')].rename(columns={'label': 'matchName'})
 df['next_player'] = df['playerId'].shift(-1)
@@ -327,18 +321,18 @@ df.loc[df['accurate'] != 1, 'next_player'] = None
 df = df[df['next_player'].notnull()]
 df = df[['playerId','x', 'y', 'end_x', 'end_y', 'eventSec', 'next_player']]
 
-df.head()
+#df.head()
 
 polish_sen = polish_players[(polish_players.matchId == 2057996) & (polish_players.teamId == '13869')]
 polish_sen = polish_sen[['playerId', 'minute', 'lastName']]
 players = polish_sen[['playerId', 'lastName']].drop_duplicates()
-players.head()
+#players.head()
 
 merged_df = df.merge(players, left_on='playerId', right_on='playerId', how='left')
 merged_df = merged_df.merge(players, left_on='next_player', right_on='playerId', how='left', suffixes=('', '_next'))
 merged_df.drop('playerId_next', axis=1, inplace=True)
 merged_df.drop(['playerId', 'next_player', 'eventSec'], axis=1, inplace=True)
-merged_df.head()
+#merged_df.head()
 
 
 df_pass = merged_df.copy()
@@ -367,7 +361,7 @@ for i, name in enumerate(df_pass["lastName"].unique()):
 
 # Adjust the size of a circle so that the player who made more passes
 scatter_df['marker_size'] = (scatter_df['no'] / scatter_df['no'].max() * 1500)
-scatter_df.head()
+#scatter_df.head()
 
 # Counting passes between players
 df_pass["pair_key"] = df_pass.apply(lambda x: "_".join(sorted([x["lastName"], x["lastName_next"]])), axis=1)
@@ -388,7 +382,8 @@ for i, row in scatter_df.iterrows():
     pitch.annotate(row.lastName, xy=(row.x, row.y), c='black', va='center', ha='center', weight="bold", size=16, ax=ax["pitch"], zorder=4)
 
 fig.suptitle("Nodes location - Poland", fontsize=30)
-plt.show()
+#plt.show()
+plt.close()
 
 # Plot once again pitch and vertices
 pitch = Pitch(line_color='grey')
@@ -414,9 +409,9 @@ for i, row in lines_df.iterrows():
                 alpha=1, lw=line_width, zorder=2, color="red", ax=ax["pitch"])
 
 fig.suptitle("Poland Passing Network against Senegal", fontsize=30)
-plt.show()
+#plt.show()
 plt.savefig("figures/"+'Polish_Passing_Network.jpg')
-
+plt.close()
 
 #calculate number of successful passes by player
 no_passes = df_pass.groupby(['lastName']).x.count().reset_index()
@@ -505,9 +500,9 @@ for i, row in lines_df.iterrows():
                 alpha=1, lw=line_width, zorder=2, color="red", ax=ax["pitch"])
 
 fig.suptitle("Poland Offensive Passing Network against Senegal", fontsize=30)
-plt.show()
+#plt.show()
 plt.savefig("figures/"+'Polish_Offensive_Passing_Network.jpg')
-
+plt.close()
 
 df_polish_mathes_events = polish_matches_events[(polish_matches_events.eventName=='Pass') & (polish_matches_events.teamId == 13869)].rename(columns={'label': 'matchName'})
 df_polish_mathes_events = pd.merge(df_polish_mathes_events, polish_players_names, on='playerId')
@@ -538,5 +533,7 @@ for i, row in df_polish_mathes_events.iterrows():
     ax.text(row['count'], row['sucPass']+0.005, row['lastName'], ha='center', va='center')
 
 # display the plot
-plt.show()
+#plt.show()
 plt.savefig("figures/"+'Passing_Scatterplot.jpg')
+plt.close()
+
