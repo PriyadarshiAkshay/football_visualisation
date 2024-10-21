@@ -57,3 +57,8 @@ This project provides a comprehensive analysis and visualization of football mat
 - Create an interactive dashboard for easier data exploration
 
 This project provides a solid foundation for in-depth football match analysis, offering valuable insights for coaches, analysts, and football enthusiasts alike.
+
+## Sources:
+Data from: Pappalardo, Luca; Massucco, Emanuele (2019). Soccer match event dataset. figshare. Collection. https://doi.org/10.6084/m9.figshare.c.4415000.v5
+
+Visualisation guide: Maciej Gieparda
