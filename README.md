@@ -6,7 +6,7 @@ This project provides a comprehensive analysis and visualization of football mat
 
 1. **Shot Analysis**: Visualizes shots taken by a team in a specific match, color-coded by outcome (Goal, Accurate, Missed).
 
-   ![Shot Analysis](figures/shots_Japan-Poland,0-1_plot.jpg)
+   ![Shot Analysis](figures/shots_Poland_Japan_plot.jpg)
 
 2. **Pass Analysis**: Shows passes made by each player in the team, with arrows indicating pass direction and color indicating accuracy.
 
@@ -19,6 +19,8 @@ This project provides a comprehensive analysis and visualization of football mat
 4. **Pass Success Analysis**: Scatter plot showing the relationship between the number of passes attempted and pass success rate for each player.
 
    ![Pass Success Analysis](figures/Passing_Scatterplot.jpg)
+
+5. **Centralisation Index**:  The index measures how concentrated the passes are among players, with higher values indicating that a few players make most of the passes.
 
 ## How It Works
 

@@ -39,6 +39,29 @@ def get_team_wyId(team_name):
     else:
         return None
 
+# Select the opponent
+def get_opponent_name():
+    input_opponent =input("Enter the name of the opponent: ")
+    if input_opponent in names_of_opponents:
+        return input_opponent
+    else:
+        print("Invalid input. Please enter a valid opponent name from:", names_of_opponents)
+        return get_opponent_name()
+
+def decode_name(name):
+    if isinstance(name, str):
+        return name.encode('utf-8').decode('unicode_escape')
+    return name
+
+# Define a custom function to determine the shot outcome
+def shot_outcome(row):
+    if row['Goal'] == 1:
+        return 'Goal'
+    elif row['accurate'] == 1:
+        return 'Accurate'
+    elif row['not accurate'] == 1:
+        return 'Missed'
+
 # Load the data
 df_teams = load_json(path_teams)
 df_matches = load_json(path_matches)
@@ -49,7 +72,7 @@ events_name = pd.read_csv(path_events_name)
 
 # Get the wyId of the selected team
 team_wyId = get_team_wyId(team_name)
-print(f"The wyId for {team_name} is {team_wyId}")
+#print(f"The wyId for {team_name} is {team_wyId}")
 
 # Selecting the matches of the team.
 team_matches = df_matches[df_matches['teamsData'].apply(lambda x: str(team_wyId) in x.keys())]
@@ -59,19 +82,10 @@ team_matches_list = list(team_matches.wyId)
 list_of_opponents = [item for sublist in team_matches['teamsData'].apply(lambda x: list(x.keys())) for item in sublist]
 list_of_opponents = [team_id for team_id in list_of_opponents if team_id != str(team_wyId)]
 names_of_opponents=[df_teams[df_teams['wyId']==int(x)]['name'].values[0] for x in list_of_opponents]
-print(f"The opponents were: \n{names_of_opponents}")
-
-# Select the opponent
-def get_opponent_name():
-    input_opponent =input("Enter the name of the opponent: ")
-    if input_opponent in names_of_opponents:
-        return input_opponent
-    else:
-        print("Invalid input. Please enter a valid opponent name from:", names_of_opponents)
-        return get_opponent_name()
 
 # Get the opponent name from the user if not provided
 if opponent_name is None:
+    print(f"The opponents were: \n{names_of_opponents}")
     opponent_name = get_opponent_name()
 
 # Get the wyId of the selected opponent
@@ -135,11 +149,6 @@ players_df = players_df[['matchId', 'teamId', 'playerId', 'inFormation', 'sub', 
 match_players = pd.merge(players_df, players_world_cup, on='playerId', how='left')
 team1_players = match_players[match_players.teamId == str(team_wyId)]
 
-def decode_name(name):
-    if isinstance(name, str):
-        return name.encode('utf-8').decode('unicode_escape')
-    return name
-
 team1_players.loc[:, 'lastName'] = team1_players['lastName'].apply(decode_name)
 team1_players.loc[:, 'firstName'] = team1_players['firstName'].apply(decode_name)
 team1_players.loc[:, 'shortName'] = team1_players['shortName'].apply(decode_name)
@@ -171,14 +180,7 @@ team1_players_names = team1_players.loc[:, ['playerId', 'lastName', 'firstName']
 df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Shot') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
 df_team1_matches_events = pd.merge(df_team1_matches_events, team1_players_names, on='playerId')
 
-# Define a custom function to determine the shot outcome
-def shot_outcome(row):
-    if row['Goal'] == 1:
-        return 'Goal'
-    elif row['accurate'] == 1:
-        return 'Accurate'
-    elif row['not accurate'] == 1:
-        return 'Missed'
+
 
 # Apply the custom function to create the 'shot_outcome' column
 df_team1_matches_events['shot_outcome'] = df_team1_matches_events.apply(shot_outcome, axis=1)
@@ -222,7 +224,7 @@ match_name = plot_df['matchName'].iloc[0]  # Get the match name from the first r
 fig.suptitle(match_name, fontsize=24)
 fig.set_size_inches(12, 8)
 #plt.show()
-file_name = 'shots_{}_plot.jpg'.format(match_name)
+file_name = f"shots_{team_name}_{opponent_name}_plot.jpg"
 plt.savefig("figures/"+file_name)
 plt.close()
 
@@ -383,6 +385,10 @@ fig.suptitle(f"Nodes location - {team_name} {fname}", fontsize=30)
 plt.savefig("figures/"+f"Nodes_{team_name}_{fname}.jpg")
 plt.close()
 
+############################################
+############################################
+#############################################
+
 #calculate number of successful passes by player
 no_passes = df_pass.groupby(['lastName']).x.count().reset_index()
 no_passes.rename({'x':'pass_count'}, axis='columns', inplace=True)
@@ -395,6 +401,10 @@ nominator = (max_no - no_passes["pass_count"]).sum()
 #calculate the centralisation index
 centralisation_index = nominator/denominator
 print("Centralisation index is ", centralisation_index)
+
+############################################
+############################################
+#############################################
 
 
 df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Pass') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
@@ -429,3 +439,7 @@ for i, row in df_team1_matches_events.iterrows():
 #plt.show()
 plt.savefig("figures/"+'Passing_Scatterplot.jpg')
 plt.close()
+
+############################################
+############################################
+#############################################
