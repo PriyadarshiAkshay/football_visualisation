@@ -6,15 +6,15 @@ This project provides a comprehensive analysis and visualization of football mat
 
 1. **Shot Analysis**: Visualizes shots taken by a team in a specific match, color-coded by outcome (Goal, Accurate, Missed).
 
-   ![Shot Analysis](figures/shots_Poland_Japan_plot.jpg)
+   ![Shot Analysis](figures/shots_Germany_Sweden_plot.jpg)
 
 2. **Pass Analysis**: Shows passes made by each player in the team, with arrows indicating pass direction and color indicating accuracy.
 
-   ![Pass Analysis](figures/Poland_offensive_passes_Japan.jpg)
+   ![Pass Analysis](figures/Germany_offensive_passes_Sweden.jpg)
 
 3. **Player Interaction Network**: Displays a network of player interactions based on successful passes.
 
-   ![Player Interaction Network](figures/Nodes_Poland_offensive.jpg)
+   ![Player Interaction Network](figures/Nodes_Germany_offensive.jpg)
 
 4. **Pass Success Analysis**: Scatter plot showing the relationship between the number of passes attempted and pass success rate for each player.
 
