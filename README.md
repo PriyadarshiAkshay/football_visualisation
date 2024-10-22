@@ -1,24 +1,26 @@
 # Football Match Visualization
 
-This project provides a comprehensive analysis and visualization of football match data, focusing on passes, shots, and player interactions. It uses data from the World Cup to create insightful visualizations that help understand team and player performance.
+![Passes with time](figures/Germany_passes_Sweden.gif)
+
+This project provides a comprehensive analysis and visualization of football match data, focusing on passes, shots, and player interactions. It uses data from the World Cup to create insightful visualizations that help understand team and player performance. You can select any team and choose their opponent team for the analysis.
 
 ## Features
 
 1. **Shot Analysis**: Visualizes shots taken by a team in a specific match, color-coded by outcome (Goal, Accurate, Missed).
 
-   ![Shot Analysis](figures/shots_Germany_Sweden_plot.jpg)
+   ![Shot Analysis](figures/shots_Germany_Sweden_plot.png)
 
 2. **Pass Analysis**: Shows passes made by each player in the team, with arrows indicating pass direction and color indicating accuracy.
 
-   ![Pass Analysis](figures/Germany_offensive_passes_Sweden.jpg)
+   ![Pass Analysis](figures/Germany_offensive_passes_Sweden.png)
 
 3. **Player Interaction Network**: Displays a network of player interactions based on successful passes.
 
-   ![Player Interaction Network](figures/Nodes_Germany_offensive.jpg)
+   ![Player Interaction Network](figures/Nodes_Germany_offensive.png)
 
 4. **Pass Success Analysis**: Scatter plot showing the relationship between the number of passes attempted and pass success rate for each player.
 
-   ![Pass Success Analysis](figures/Passing_Scatterplot.jpg)
+   ![Pass Success Analysis](figures/Passing_Scatterplot.png)
 
 5. **Centralisation Index**:  The index measures how concentrated the passes are among players, with higher values indicating that a few players make most of the passes.
 
