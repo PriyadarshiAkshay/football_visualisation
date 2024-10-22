@@ -50,9 +50,26 @@ This project provides a comprehensive analysis and visualization of football mat
 ## Usage
 
 1. Ensure you have the required data files in the `data/` directory.
-2. Install the necessary Python libraries (pandas, matplotlib, mplsoccer, etc.).
-3. Run the script, specifying the desired team and opponent.
-4. Check the `figures/` directory for the generated visualizations.
+2. Install the necessary Python libraries:
+   ```
+   pip install pandas matplotlib mplsoccer numpy scikit-learn
+   ```
+3. Run the analysis using either the Python script or the Jupyter notebook:
+
+   - Using the Python script:
+     ```
+     python pass_analysis/pass_analysis.py
+     ```
+   - Using the Jupyter notebook:
+     1. Open `main.ipynb` in Jupyter Lab or Jupyter Notebook.
+     2. Run all cells in the notebook.
+
+4. To analyze a different match or team:
+   - Open `main.ipynb` or `pass_analysis/pass_analysis.py`
+   - Modify the `team_name` and `opponent_name` variables
+   - Run the script or notebook again
+
+5. Check the `figures/` directory for the generated visualizations.
 
 ## Future Improvements
 

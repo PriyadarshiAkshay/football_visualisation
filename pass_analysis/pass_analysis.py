@@ -40,14 +40,23 @@ def shot_outcome(row):
         return 'Missed'
 
 class PassAnalysis:
-    def __init__(self, team_name, opponent_name=None, offensive_passes=True, include_passes=True):
+    def __init__(self, team_name, opponent_name=None, offensive_passes=True, include_passes=True, figures_folder="figures/"):
         self.team_name = team_name
         self.opponent_name = opponent_name
         self.offensive_passes = offensive_passes
         self.include_passes = include_passes
+        self.figures_folder = figures_folder
+
+        if self.figures_folder[-1] != "/":
+            self.figures_folder += "/"
+
+        if not os.path.exists(self.figures_folder):
+            os.makedirs(self.figures_folder)
+        print(f"Figures will be saved in {self.figures_folder}")
+    
+
 
     def load_and_analyse_data(self,):
-        team_name,opponent_name,offensive_passes,include_passes=self.team_name,self.opponent_name,self.offensive_passes,self.include_passes
 
         # Setting the paths to the data files
         path_teams = 'data/teams.json'
@@ -66,7 +75,7 @@ class PassAnalysis:
         events_name = pd.read_csv(path_events_name)
 
         # Get the wyId of the selected team
-        self.team_wyId = get_team_wyId(df_teams,team_name)
+        self.team_wyId = get_team_wyId(df_teams,self.team_name)
         #print(f"The wyId for {team_name} is {team_wyId}")
 
         # Selecting the matches of the team.
@@ -79,12 +88,12 @@ class PassAnalysis:
         names_of_opponents=[df_teams[df_teams['wyId']==int(x)]['name'].values[0] for x in list_of_opponents]
 
         # Get the opponent name from the user if not provided
-        if opponent_name is None:
+        if self.opponent_name is None:
             print(f"The opponents were: \n{names_of_opponents}")
-            opponent_name = get_opponent_name(names_of_opponents)
+            self.opponent_name = get_opponent_name(names_of_opponents)
 
         # Get the wyId of the selected opponent
-        selected_opponent_id=list_of_opponents[names_of_opponents.index(opponent_name)]
+        selected_opponent_id=list_of_opponents[names_of_opponents.index(self.opponent_name)]
 
         # Select the match
         filtered_matches = team_matches[team_matches['teamsData'].apply(lambda x: selected_opponent_id in x.keys())]
@@ -172,21 +181,18 @@ class PassAnalysis:
 
         self.team1_players_names = team1_players.loc[:, ['playerId', 'lastName', 'firstName']].drop_duplicates(subset=['playerId', 'lastName','firstName'])
 
-        self.team1_players, self.opponent_name = team1_players, opponent_name
+        self.team1_players = team1_players
 
     ##### common stuff ####
 
     def plot_shots(self,):
-        team_matches_events, team_wyId, selected_match, team1_players_names, team_name, opponent_name = self.team_matches_events, self.team_wyId, self.selected_match, self.team1_players_names, self.team_name, self.opponent_name
 
-        df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Shot') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
-        df_team1_matches_events = pd.merge(df_team1_matches_events, team1_players_names, on='playerId')
-
-
+        df_team1_matches_events = self.team_matches_events[(self.team_matches_events.eventName=='Shot') & (self.team_matches_events.teamId == self.team_wyId)].rename(columns={'label': 'matchName'})
+        df_team1_matches_events = pd.merge(df_team1_matches_events, self.team1_players_names, on='playerId')
 
         # Apply the custom function to create the 'shot_outcome' column
         df_team1_matches_events['shot_outcome'] = df_team1_matches_events.apply(shot_outcome, axis=1)
-        plot_df = df_team1_matches_events[(df_team1_matches_events.matchId == selected_match)].copy()
+        plot_df = df_team1_matches_events[(df_team1_matches_events.matchId == self.selected_match)].copy()
 
         pitch = Pitch(line_zorder=2, line_color="black")
         fig, ax = pitch.draw(figsize=(12, 8))
@@ -226,22 +232,21 @@ class PassAnalysis:
         fig.suptitle(match_name, fontsize=24)
         fig.set_size_inches(12, 8)
         #plt.show()
-        file_name = f"shots_{team_name}_{opponent_name}_plot.png"
-        plt.savefig("figures/"+file_name, bbox_inches='tight',dpi=300, edgecolor='none')
+        file_name = f"shots_{self.team_name}_{self.opponent_name}_plot.png"
+        plt.savefig(self.figures_folder+file_name, bbox_inches='tight',dpi=300, edgecolor='none')
         plt.close()
 
     def plot_passes(self,):
-        team_matches_events, team_wyId, selected_match, team1_players_names, team_name, opponent_name, offensive_passes= self.team_matches_events, self.team_wyId, self.selected_match, self.team1_players_names, self.team_name, self.opponent_name, self.offensive_passes
 
-        df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Pass') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
-        df_team1_matches_events = pd.merge(df_team1_matches_events, team1_players_names, on='playerId')
+        df_team1_matches_events = self.team_matches_events[(self.team_matches_events.eventName=='Pass') & (self.team_matches_events.teamId == self.team_wyId)].rename(columns={'label': 'matchName'})
+        df_team1_matches_events = pd.merge(df_team1_matches_events, self.team1_players_names, on='playerId')
 
         #prepare the dataframe of passes by team1 that were no-throw ins
-        mask_team1 = (df_team1_matches_events.subEventName != "Throw-in") & (df_team1_matches_events.matchId == selected_match)
+        mask_team1 = (df_team1_matches_events.subEventName != "Throw-in") & (df_team1_matches_events.matchId == self.selected_match)
         df_passes = df_team1_matches_events.loc[mask_team1, ['x', 'y', 'end_x', 'end_y', 'lastName', 'accurate']]
 
         fname = 'all'
-        if offensive_passes:
+        if self.offensive_passes:
             df_passes = df_passes[df_passes.end_x > df_passes.x]
             fname = 'offensive'
 
@@ -288,22 +293,21 @@ class PassAnalysis:
             ax.remove()
 
         #Another way to set title using mplsoccer
-        axs['title'].text(0.5, 0.5, f"{team_name} {fname} passes against {opponent_name}", ha='center', va='center', fontsize=30)
+        axs['title'].text(0.5, 0.5, f"{self.team_name} {fname} passes against {self.opponent_name}", ha='center', va='center', fontsize=30)
         #plt.show()
-        plt.savefig("figures/"+f"{team_name}_{fname}_passes_{opponent_name}.png", bbox_inches='tight',dpi=300, edgecolor='none')
+        plt.savefig(self.figures_folder+f"{self.team_name}_{fname}_passes_{self.opponent_name}.png", bbox_inches='tight',dpi=300, edgecolor='none')
         plt.close()
 
     def plot_pass_network(self,):
-        team_matches_events, team_wyId, selected_match, team1_players, team_name, offensive_passes, include_passes = self.team_matches_events, self.team_wyId, self.selected_match, self.team1_players, self.team_name, self.offensive_passes, self.include_passes
 
-        df = team_matches_events[(team_matches_events.matchId == selected_match) & (team_matches_events.teamId == team_wyId) & (team_matches_events.eventName == 'Pass') & (team_matches_events.matchPeriod == '1H')].rename(columns={'label': 'matchName'})
+        df = self.team_matches_events[(self.team_matches_events.matchId == self.selected_match) & (self.team_matches_events.teamId == self.team_wyId) & (self.team_matches_events.eventName == 'Pass') & (self.team_matches_events.matchPeriod == '1H')].rename(columns={'label': 'matchName'})
         df['next_player'] = df['playerId'].shift(-1)
         df.loc[df['accurate'] != 1, 'next_player'] = None
         df = df[df['next_player'].notnull()]
         df = df[['playerId','x', 'y', 'end_x', 'end_y', 'eventSec', 'next_player']]
 
 
-        team1_team2 = team1_players[(team1_players.matchId == selected_match) & (team1_players.teamId == str(team_wyId))]
+        team1_team2 = self.team1_players[(self.team1_players.matchId == self.selected_match) & (self.team1_players.teamId == str(self.team_wyId))]
         team1_team2 = team1_team2[['playerId', 'minute', 'lastName']]
         players = team1_team2[['playerId', 'lastName']].drop_duplicates()
 
@@ -324,7 +328,7 @@ class PassAnalysis:
         df_pass['end_y'] = df_pass['end_y'] / 100 * pitchWidthY
 
         fname = 'all'
-        if offensive_passes:
+        if self.offensive_passes:
             df_pass = df_pass[df_pass.end_x > df_pass.x]
             fname = 'offensive'
 
@@ -362,7 +366,7 @@ class PassAnalysis:
         for i, row in scatter_df.iterrows():
             pitch.annotate(row.lastName, xy=(row.x, row.y), c='black', va='center', ha='center', weight="bold", size=16, ax=ax["pitch"], zorder=4)
 
-        if include_passes:
+        if self.include_passes:
             # Plot lines between players
             for i, row in lines_df.iterrows():
                 player1 = row["pair_key"].split("_")[0]
@@ -380,10 +384,11 @@ class PassAnalysis:
                             alpha=1, lw=line_width, zorder=2, color="red", ax=ax["pitch"])
 
 
-        fig.suptitle(f"Nodes location - {team_name} {fname}", fontsize=30)
+        fig.suptitle(f"Nodes location - {self.team_name} {fname}", fontsize=30)
         #plt.show()
-        plt.savefig("figures/"+f"Nodes_{team_name}_{fname}.png", bbox_inches='tight',dpi=300, edgecolor='none')
+        plt.savefig(self.figures_folder+f"Nodes_{self.team_name}_{fname}.png", bbox_inches='tight',dpi=300, edgecolor='none')
         plt.close()
+        self.df_pass = df_pass
         return df_pass
 
     def centralisation_index(self,df_pass):
@@ -402,9 +407,8 @@ class PassAnalysis:
         print("Centralisation index is ", centralisation_index)
 
     def passing_scatterplot(self,):
-        team_matches_events, team_wyId, team1_players_names = self.team_matches_events, self.team_wyId, self.team1_players_names
-        df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Pass') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
-        df_team1_matches_events = pd.merge(df_team1_matches_events, team1_players_names, on='playerId')
+        df_team1_matches_events = self.team_matches_events[(self.team_matches_events.eventName=='Pass') & (self.team_matches_events.teamId == self.team_wyId)].rename(columns={'label': 'matchName'})
+        df_team1_matches_events = pd.merge(df_team1_matches_events, self.team1_players_names, on='playerId')
         df_team1_matches_events = df_team1_matches_events[['lastName', 'accurate']]
         # group by lastName and compute count and sum
         df_team1_matches_events = df_team1_matches_events.groupby('lastName').agg({'accurate': ['count', 'sum']})
@@ -433,16 +437,15 @@ class PassAnalysis:
 
         # display the plot
         #plt.show()
-        plt.savefig("figures/"+'Passing_Scatterplot.png', bbox_inches='tight',dpi=300, edgecolor='none')
+        plt.savefig(self.figures_folder+'Passing_Scatterplot.png', bbox_inches='tight',dpi=300, edgecolor='none')
         plt.close()
 
     def plot_passes_gif(self,):
-        team_matches_events, team_wyId, selected_match, team1_players_names, team_name, opponent_name, offensive_passes = self.team_matches_events, self.team_wyId, self.selected_match, self.team1_players_names, self.team_name, self.opponent_name, self.offensive_passes
 
-        df_team1_matches_events = team_matches_events[(team_matches_events.eventName=='Pass') & (team_matches_events.teamId == team_wyId)].rename(columns={'label': 'matchName'})
-        df_team1_matches_events = pd.merge(df_team1_matches_events, team1_players_names, on='playerId')
+        df_team1_matches_events = self.team_matches_events[(self.team_matches_events.eventName=='Pass') & (self.team_matches_events.teamId == self.team_wyId)].rename(columns={'label': 'matchName'})
+        df_team1_matches_events = pd.merge(df_team1_matches_events, self.team1_players_names, on='playerId')
 
-        mask_team1 = (df_team1_matches_events.subEventName != "Throw-in") & (df_team1_matches_events.matchId == selected_match)
+        mask_team1 = (df_team1_matches_events.subEventName != "Throw-in") & (df_team1_matches_events.matchId == self.selected_match)
         df_passes = df_team1_matches_events.loc[mask_team1, ['x', 'y', 'end_x', 'end_y', 'lastName', 'accurate', 'eventSec', 'matchPeriod','Goal']]
 
         e1_time = df_passes.loc[df_passes['matchPeriod'] == 'E1', 'eventSec'].max()
@@ -463,7 +466,7 @@ class PassAnalysis:
         # Replace the values in the 'matchPeriod' column
         df_passes['timestamp'] = df_passes['matchPeriod'].map(mapping)+df_passes['eventSec']
 
-        if offensive_passes:
+        if self.offensive_passes:
             df_passes = df_passes[df_passes.end_x > df_passes.x]
 
         pitchLengthX = 120
@@ -495,13 +498,13 @@ class PassAnalysis:
                     color = 'green'
                 pitch.arrows(row.x, row.y, row.end_x, row.end_y, color=color, alpha=max(0.2, alpha), ax=ax, width=2)
             
-            ax.set_title(f"{team_name} passes against {opponent_name}\nTime: {frame} minutes")
+            ax.set_title(f"{self.team_name} passes against {self.opponent_name}\nTime: {frame} minutes")
 
         # Create the animation
         anim = animation.FuncAnimation(fig, update, frames=90, interval=200, repeat=False)
 
         # Save the animation as a GIF
-        anim.save(f"figures/{team_name}_passes_{opponent_name}.gif", writer='pillow', fps=5, dpi=300, savefig_kwargs={'facecolor': 'white'})
+        anim.save(self.figures_folder+f"{self.team_name}_passes_{self.opponent_name}.gif", writer='pillow', fps=5, dpi=300, savefig_kwargs={'facecolor': 'white'})
         plt.close()
 
 
@@ -516,8 +519,9 @@ if __name__ == "__main__":
     opponent_name = "Sweden"#None
     offensive_passes = True
     include_passes = True
+    figures_folder = "figures/"
 
-    PA = PassAnalysis(team_name, opponent_name, offensive_passes, include_passes)
+    PA = PassAnalysis(team_name, opponent_name, offensive_passes, include_passes, figures_folder)
 
     PA.load_and_analyse_data()
 
