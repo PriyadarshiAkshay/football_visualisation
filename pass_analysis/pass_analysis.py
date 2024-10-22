@@ -486,7 +486,7 @@ def plot_passes_gif(team_matches_events, team_wyId, selected_match, team1_player
         ax.set_title(f"{team_name} passes against {opponent_name}\nTime: {frame} minutes")
 
     # Create the animation
-    anim = animation.FuncAnimation(fig, update, frames=20, interval=200, repeat=False)
+    anim = animation.FuncAnimation(fig, update, frames=90, interval=200, repeat=False)
 
     # Save the animation as a GIF
     anim.save(f"figures/{team_name}_passes_{opponent_name}.gif", writer='pillow', fps=5, dpi=300, savefig_kwargs={'facecolor': 'white'})
